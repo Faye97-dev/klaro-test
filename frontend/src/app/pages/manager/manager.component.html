@@ -2,7 +2,9 @@
   <mat-card-title>Toutes les demandes</mat-card-title>
   <mat-card-content>
     <div class="alert alert-error" *ngIf="errorMessage">{{ errorMessage }}</div>
-    <div class="alert alert-success" *ngIf="successMessage">{{ successMessage }}</div>
+    <div class="alert alert-success" *ngIf="successMessage">
+      {{ successMessage }}
+    </div>
 
     <div class="spinner-container" *ngIf="loading">
       <mat-spinner diameter="40"></mat-spinner>
@@ -16,12 +18,16 @@
     >
       <ng-container matColumnDef="beneficiaryId">
         <th mat-header-cell *matHeaderCellDef>Bénéficiaire</th>
-        <td mat-cell *matCellDef="let row">{{ row.beneficiaryId | slice:0:8 }}…</td>
+        <td mat-cell *matCellDef="let row">
+          {{ row.beneficiaryId | slice: 0 : 8 }}…
+        </td>
       </ng-container>
 
       <ng-container matColumnDef="category">
         <th mat-header-cell *matHeaderCellDef>Catégorie</th>
-        <td mat-cell *matCellDef="let row">{{ getCategoryLabel(row.category) }}</td>
+        <td mat-cell *matCellDef="let row">
+          {{ getCategoryLabel(row.category) }}
+        </td>
       </ng-container>
 
       <ng-container matColumnDef="amount">
@@ -39,7 +45,9 @@
       <ng-container matColumnDef="actions">
         <th mat-header-cell *matHeaderCellDef>Actions</th>
         <td mat-cell *matCellDef="let row">
-          <ng-container *ngIf="getNextStatuses(row.status).length; else noAction">
+          <ng-container
+            *ngIf="getNextStatuses(row.status).length; else noAction"
+          >
             <div class="actions-cell">
               <mat-form-field appearance="outline" class="status-select">
                 <mat-select
@@ -74,7 +82,10 @@
       <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
     </table>
 
-    <div class="empty-state" *ngIf="!loading && (requests$ | async)?.length === 0">
+    <div
+      class="empty-state"
+      *ngIf="!loading && (requests$ | async)?.length === 0"
+    >
       <p>Aucune demande soumise par les bénéficiaires.</p>
     </div>
   </mat-card-content>

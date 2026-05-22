@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { switchMap } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import {
   FormBuilder,
@@ -103,14 +104,18 @@ export class BeneficiaryComponent implements OnInit {
         amount: Number(amount),
         description,
       })
+      .pipe(
+        switchMap(() =>
+          this.aidRequestService.loadForBeneficiary(
+            this.authService.currentUserId,
+          ),
+        ),
+      )
       .subscribe({
         next: () => {
           this.submitting = false;
           this.successMessage = 'Demande soumise avec succès !';
           this.form.reset();
-          this.aidRequestService
-            .loadForBeneficiary(this.authService.currentUserId)
-            .subscribe();
         },
         error: (err) => {
           this.submitting = false;

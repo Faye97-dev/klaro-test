@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { switchMap } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -70,15 +71,17 @@ export class ManagerComponent implements OnInit {
 
     this.errorMessage = '';
     this.successMessage = '';
-    this.aidRequestService.updateStatus(request.id, status).subscribe({
-      next: () => {
-        this.successMessage = `Statut mis à jour vers ${getStatusLabel(status)}`;
-        this.aidRequestService.loadAll().subscribe();
-      },
-      error: (err) => {
-        this.errorMessage =
-          err?.error?.message ?? 'Transition de statut invalide';
-      },
-    });
+    this.aidRequestService
+      .updateStatus(request.id, status)
+      .pipe(switchMap(() => this.aidRequestService.loadAll()))
+      .subscribe({
+        next: () => {
+          this.successMessage = `Statut mis à jour vers ${getStatusLabel(status)}`;
+        },
+        error: (err) => {
+          this.errorMessage =
+            err?.error?.message ?? 'Transition de statut invalide';
+        },
+      });
   }
 }
