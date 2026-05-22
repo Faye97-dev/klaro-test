@@ -1,10 +1,8 @@
-# Klaro — Module Demandes d'aide financière
+# Klaro Module Demandes d'aide financière
 
 Test technique Fullstack Angular 15 / NestJS 9.
 
 ## Démarrage rapide
-
-### Avec Docker (recommandé)
 
 ```bash
 docker-compose up --build
@@ -13,36 +11,11 @@ docker-compose up --build
 - API : http://localhost:3000
 - Frontend : http://localhost:4200
 
-### En local
-
-**1. PostgreSQL**
-
-```bash
-docker run -d --name klaro-pg -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=klaro -p 5432:5432 postgres:15-alpine
-```
-
-**2. Backend**
-
-```bash
-cd backend
-npm install
-npm run migrate
-npm run start:dev
-```
-
-**3. Frontend**
-
-```bash
-cd frontend
-npm install
-npm start
-```
-
 ## API
 
 | Méthode | Route | Description |
 |---------|-------|-------------|
-| POST | `/aid-requests` | Créer une demande (statut `PENDING`) |
+| POST | `/aid-requests` | Créer une demande |
 | GET | `/aid-requests?beneficiaryId=&status=&page=&limit=` | Lister avec filtres et pagination |
 | PATCH | `/aid-requests/:id/status` | Mettre à jour le statut |
 
@@ -54,16 +27,16 @@ npm start
 
 ## Choix techniques
 
-- **Knex** : léger, migrations explicites, requêtes SQL lisibles sans couche ORM lourde. Alternative Hasura non requise pour ce périmètre CRUD + règles métier.
-- **Angular standalone** : structure moderne, moins de boilerplate que NgModules.
-- **BehaviorSubject** dans `AidRequestService` pour partager l'état entre formulaire et listes sans NgRx.
+- **Knex** : simple et flexible, avec des migrations claires et des requêtes SQL faciles à comprendre, sans la complexité d’un ORM complet. Hasura aurait été un peu overkill.
+- **Angular standalone** : approche plus moderne et plus légère, qui évite une bonne partie du boilerplate lié aux NgModules.
+- **BehaviorSubject** dans `AidRequestService` permet de partager facilement l’état entre le formulaire et les listes, sans avoir besoin d’ajouter toute la complexité de NgRx.
 - **Auth mockée** : `AuthService.currentUserId` en dur (`1632d0d2-aaf3-429b-9229-5c0d79e8789a`).
 
 ### Avec plus de temps
 
 - Authentification JWT + guards par rôle (bénéficiaire vs gestionnaire) côté front et back
 - Pagination et filtres côté UI (le backend les supporte déjà)
-- Transaction sérialisée sur la création pour éviter une race condition sur le compteur de demandes actives
+- Transaction sérialisée à la création pour éviter les race conditions sur le compteur de demandes actives.
 - Exposer les transitions de statut autorisées depuis le backend au lieu de dupliquer la logique côté frontend
 - Mises à jour optimistes sur les changements de statut (rollback en cas d'erreur serveur)
 - Codes d'erreur structurés côté API (`{ code: "AID_400_01", ... }`) + mapping i18n côté frontend pour des messages utilisateur localisés
@@ -75,7 +48,7 @@ cd backend && npm test
 cd frontend && npm test -- --watch=false --browsers=ChromeHeadless
 ```
 
-## Partie 3 — Réflexion technique
+## Réflexion technique
 
 ### 1. Migration Angular 15 → 19
 
@@ -87,4 +60,4 @@ Hasura pour les **lectures simples** avec filtres/pagination (ex. `GET aid-reque
 
 ### 3. BehaviorSubject vs NgRx / Signals
 
-Pour une évolution robuste : **Angular Signals** (v16+) pour l'état UI local (plus simple, moins de boilerplate que NgRx). NgRx si l'app grossit (effets de bord complexes, cache normalisé, time-travel debug). Le BehaviorSubject actuel suffit pour ce module isolé.
+Pour une évolution robuste : **Angular Signals** (v16+) pour l'état UI local (plus simple, moins de boilerplate que NgRx). NgRx si l'app grossit (effets complexes, time-travel debug). Le BehaviorSubject actuel suffit pour ce module isolé.
