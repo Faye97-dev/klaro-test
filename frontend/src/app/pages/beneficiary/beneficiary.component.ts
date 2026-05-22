@@ -1,5 +1,5 @@
-import { Component, OnInit } from '@angular/core';
-import { switchMap } from 'rxjs';
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Subject, switchMap, takeUntil } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import {
   FormBuilder,
@@ -41,10 +41,13 @@ import {
   templateUrl: './beneficiary.component.html',
   styleUrls: ['./beneficiary.component.scss'],
 })
-export class BeneficiaryComponent implements OnInit {
+export class BeneficiaryComponent implements OnInit, OnDestroy {
+  private readonly destroy$ = new Subject<void>();
+
   readonly categories = Object.values(AidCategory);
   readonly getCategoryLabel = getCategoryLabel;
   readonly getStatusLabel = getStatusLabel;
+
   readonly displayedColumns = [
     'category',
     'amount',
@@ -54,8 +57,10 @@ export class BeneficiaryComponent implements OnInit {
   ];
 
   form: FormGroup;
+
   errorMessage = '';
   successMessage = '';
+
   loading = false;
   submitting = false;
 
@@ -80,10 +85,16 @@ export class BeneficiaryComponent implements OnInit {
     this.loading = true;
     this.aidRequestService
       .loadForBeneficiary(this.authService.currentUserId)
+      .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: () => (this.loading = false),
         error: () => (this.loading = false),
       });
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   submit(): void {
@@ -95,6 +106,7 @@ export class BeneficiaryComponent implements OnInit {
     this.errorMessage = '';
     this.successMessage = '';
     this.submitting = true;
+
     const { category, amount, description } = this.form.getRawValue();
 
     this.aidRequestService
@@ -110,6 +122,7 @@ export class BeneficiaryComponent implements OnInit {
             this.authService.currentUserId,
           ),
         ),
+        takeUntil(this.destroy$),
       )
       .subscribe({
         next: () => {

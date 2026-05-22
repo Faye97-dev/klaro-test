@@ -1,5 +1,5 @@
-import { Component, OnInit } from '@angular/core';
-import { switchMap } from 'rxjs';
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Subject, switchMap, takeUntil } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -32,9 +32,12 @@ import {
   templateUrl: './manager.component.html',
   styleUrls: ['./manager.component.scss'],
 })
-export class ManagerComponent implements OnInit {
+export class ManagerComponent implements OnInit, OnDestroy {
+  private readonly destroy$ = new Subject<void>();
   readonly getCategoryLabel = getCategoryLabel;
   readonly getStatusLabel = getStatusLabel;
+  readonly getNextStatuses = getNextStatuses;
+
   readonly displayedColumns = [
     'beneficiaryId',
     'category',
@@ -44,23 +47,29 @@ export class ManagerComponent implements OnInit {
   ];
 
   requests$ = this.aidRequestService.requests$;
+
   selectedStatus: Record<string, AidStatus> = {};
+
+  loading = false;
   errorMessage = '';
   successMessage = '';
-  loading = false;
 
   constructor(private readonly aidRequestService: AidRequestService) {}
 
   ngOnInit(): void {
     this.loading = true;
-    this.aidRequestService.loadAll().subscribe({
-      next: () => (this.loading = false),
-      error: () => (this.loading = false),
-    });
+    this.aidRequestService
+      .loadAll()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => (this.loading = false),
+        error: () => (this.loading = false),
+      });
   }
 
-  getNextStatuses(current: AidStatus): AidStatus[] {
-    return getNextStatuses(current);
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   updateStatus(request: AidRequest): void {
@@ -71,9 +80,13 @@ export class ManagerComponent implements OnInit {
 
     this.errorMessage = '';
     this.successMessage = '';
+
     this.aidRequestService
       .updateStatus(request.id, status)
-      .pipe(switchMap(() => this.aidRequestService.loadAll()))
+      .pipe(
+        switchMap(() => this.aidRequestService.loadAll()),
+        takeUntil(this.destroy$),
+      )
       .subscribe({
         next: () => {
           this.successMessage = `Statut mis à jour vers ${getStatusLabel(status)}`;
